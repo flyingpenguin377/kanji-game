@@ -1,110 +1,228 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>かんじゲーム</title>
-<style>
-body { font-family: sans-serif; text-align:center; background:#eef6ff; }
-h1 { font-size:32px; }
-button { font-size:20px; margin:8px; padding:12px; border-radius:10px; }
-#score { font-size:18px; margin:10px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>かんじゲーム</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+      text-align: center;
+      background: #eef6ff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 42px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    #levelButtons {
+      margin: 20px 0;
+    }
+
+    .level-btn, .choice-btn, #nextBtn, #restartBtn {
+      font-size: 24px;
+      padding: 14px 18px;
+      margin: 8px;
+      border: none;
+      border-radius: 14px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      min-width: 180px;
+    }
+
+    .choice-btn {
+      display: block;
+      width: 260px;
+      margin: 10px auto;
+    }
+
+    #score, #levelTitle, #result {
+      font-size: 24px;
+      margin: 14px 0;
+    }
+
+    #question {
+      font-size: 32px;
+      margin: 28px 0 18px;
+      min-height: 48px;
+    }
+
+    #nextBtn, #restartBtn {
+      background: #dff3d8;
+    }
+
+    #result {
+      font-weight: bold;
+      min-height: 36px;
+    }
+  </style>
 </head>
 <body>
+  <h1>かんじゲーム</h1>
 
-<h1>かんじゲーム</h1>
+  <div id="levelButtons">
+    <p>レベルをえらんでね</p>
+    <button class="level-btn" onclick="startLevel(1)">レベル1</button>
+    <button class="level-btn" onclick="startLevel(2)">レベル2</button>
+    <button class="level-btn" onclick="startLevel(3)">レベル3</button>
+    <button class="level-btn" onclick="startLevel(4)">レベル4</button>
+  </div>
 
-<p>レベルをえらんでね</p>
+  <p id="levelTitle"></p>
+  <p id="score">スコア: 0</p>
+  <p id="question">レベルを選んでね</p>
+  <div id="choices"></div>
+  <p id="result"></p>
 
-<button onclick="startLevel(1)">レベル1</button>
-<button onclick="startLevel(2)">レベル2</button>
-<button onclick="startLevel(3)">レベル3</button>
-<button onclick="startLevel(4)">レベル4</button>
+  <button id="nextBtn" style="display:none;" onclick="nextQuestion()">つぎへ</button>
+  <button id="restartBtn" style="display:none;" onclick="goHome()">レベルをえらぶ</button>
 
-<p id="score">スコア: 0</p>
-<p id="question"></p>
-<div id="choices"></div>
+  <script>
+    const quizData = {
+      1: [
+        { q: "やまはどれ？", choices: ["川", "山", "田"], answer: 1 },
+        { q: "みずはどれ？", choices: ["火", "水", "木"], answer: 1 },
+        { q: "ひはどれ？", choices: ["月", "日", "山"], answer: 1 }
+      ],
+      2: [
+        { q: "かわはどれ？", choices: ["山", "川", "田"], answer: 1 },
+        { q: "tree はどれ？", choices: ["金", "木", "土"], answer: 1 },
+        { q: "そらはどれ？", choices: ["空", "川", "虫"], answer: 0 }
+      ],
+      3: [
+        { q: "はやしはどれ？", choices: ["森", "林", "休"], answer: 1 },
+        { q: "いしはどれ？", choices: ["右", "石", "足"], answer: 1 },
+        { q: "あかるい『あさ』はどれ？", choices: ["朝", "昼", "夜"], answer: 0 }
+      ],
+      4: [
+        { q: "学校の『こう』が入るのはどれ？", choices: ["校", "木", "本"], answer: 0 },
+        { q: "先生の『せん』が入るのはどれ？", choices: ["生", "先", "学"], answer: 1 },
+        { q: "『読む』の一字目はどれ？", choices: ["話", "読", "語"], answer: 1 }
+      ]
+    };
 
-<script>
-let level = 1;
-let current = 0;
-let score = 0;
+    let currentLevel = 0;
+    let currentIndex = 0;
+    let score = 0;
+    let locked = false;
 
-const data = {
-1: [
-{q:"やまはどれ？", a:["川","山","田"], c:1},
-{q:"みずはどれ？", a:["火","水","木"], c:1}
-],
-2: [
-{q:"ひはどれ？", a:["日","月","山"], c:0},
-{q:"かわはどれ？", a:["山","川","田"], c:1}
-],
-3: [
-{q:"treeはどれ？", a:["金","木","土"], c:1},
-{q:"そらはどれ？", a:["空","山","川"], c:0}
-],
-4: [
-{q:"学校はどれ？", a:["学校","山","水"], c:0},
-{q:"先生はどれ？", a:["川","先生","木"], c:1}
-]
-};
+    const levelTitle = document.getElementById("levelTitle");
+    const scoreEl = document.getElementById("score");
+    const questionEl = document.getElementById("question");
+    const choicesEl = document.getElementById("choices");
+    const resultEl = document.getElementById("result");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const levelButtons = document.getElementById("levelButtons");
 
-function playSound(correct){
-let ctx = new (window.AudioContext || window.webkitAudioContext)();
-let osc = ctx.createOscillator();
-osc.type = "sine";
-osc.frequency.value = correct ? 600 : 200;
-osc.connect(ctx.destination);
-osc.start();
-setTimeout(()=>osc.stop(),200);
-}
+    function playSound(isCorrect) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
 
-function startLevel(l){
-level = l;
-current = 0;
-score = 0;
-updateScore();
-show();
-}
+      const ctx = new AudioContextClass();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
-function show(){
-let q = data[level][current];
-document.getElementById("question").innerText = q.q;
+      osc.type = "sine";
+      osc.frequency.value = isCorrect ? 660 : 220;
+      gain.gain.value = 0.08;
 
-let html = "";
-q.a.forEach((choice,i)=>{
-html += `<button onclick="check(${i})">${choice}</button><br>`;
-});
-document.getElementById("choices").innerHTML = html;
-}
+      osc.connect(gain);
+      gain.connect(ctx.destination);
 
-function check(i){
-let q = data[level][current];
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+    }
 
-if(i === q.c){
-score++;
-playSound(true);
-alert("せいかい！");
-}else{
-playSound(false);
-alert("ちがうよ！");
-}
+    function startLevel(level) {
+      currentLevel = level;
+      currentIndex = 0;
+      score = 0;
+      locked = false;
 
-updateScore();
+      levelButtons.style.display = "none";
+      restartBtn.style.display = "none";
+      nextBtn.style.display = "none";
+      resultEl.textContent = "";
 
-current++;
-if(current < data[level].length){
-show();
-}else{
-document.getElementById("question").innerText = "おわり！";
-document.getElementById("choices").innerHTML = "";
-}
-}
+      levelTitle.textContent = "レベル " + level;
+      updateScore();
+      showQuestion();
+    }
 
-function updateScore(){
-document.getElementById("score").innerText = "スコア: " + score;
-}
-</script>
+    function updateScore() {
+      scoreEl.textContent = "スコア: " + score;
+    }
 
+    function showQuestion() {
+      locked = false;
+      resultEl.textContent = "";
+      nextBtn.style.display = "none";
+
+      const q = quizData[currentLevel][currentIndex];
+      questionEl.textContent = q.q;
+      choicesEl.innerHTML = "";
+
+      q.choices.forEach((choice, i) => {
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        btn.textContent = choice;
+        btn.onclick = () => checkAnswer(i);
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selected) {
+      if (locked) return;
+      locked = true;
+
+      const q = quizData[currentLevel][currentIndex];
+
+      if (selected === q.answer) {
+        score++;
+        updateScore();
+        resultEl.textContent = "せいかい！";
+        playSound(true);
+      } else {
+        resultEl.textContent = "ちがうよ！";
+        playSound(false);
+      }
+
+      nextBtn.style.display = "inline-block";
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+
+      if (currentIndex < quizData[currentLevel].length) {
+        showQuestion();
+      } else {
+        questionEl.textContent = "おわり！ よくできました！";
+        choicesEl.innerHTML = "";
+        resultEl.textContent = "さいごのスコア: " + score;
+        nextBtn.style.display = "none";
+        restartBtn.style.display = "inline-block";
+      }
+    }
+
+    function goHome() {
+      currentLevel = 0;
+      currentIndex = 0;
+      score = 0;
+      updateScore();
+
+      levelButtons.style.display = "block";
+      levelTitle.textContent = "";
+      questionEl.textContent = "レベルを選んでね";
+      choicesEl.innerHTML = "";
+      resultEl.textContent = "";
+      nextBtn.style.display = "none";
+      restartBtn.style.display = "none";
+    }
+  </script>
 </body>
 </html>
