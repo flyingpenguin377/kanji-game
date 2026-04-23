@@ -4,60 +4,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>かんじゲーム</title>
 <style>
-body { font-family: sans-serif; text-align:center; background:#f0f8ff; }
-button { font-size:20px; margin:10px; padding:15px; border-radius:10px; }
+body { font-family: sans-serif; text-align:center; background:#eef6ff; }
+h1 { font-size:32px; }
+button { font-size:20px; margin:8px; padding:12px; border-radius:10px; }
+#score { font-size:18px; margin:10px; }
 </style>
 </head>
 <body>
 
 <h1>かんじゲーム</h1>
-<p id="question">スタートを押してね</p>
 
+<p>レベルをえらんでね</p>
+
+<button onclick="startLevel(1)">レベル1</button>
+<button onclick="startLevel(2)">レベル2</button>
+<button onclick="startLevel(3)">レベル3</button>
+<button onclick="startLevel(4)">レベル4</button>
+
+<p id="score">スコア: 0</p>
+<p id="question"></p>
 <div id="choices"></div>
 
-<button onclick="startGame()">スタート</button>
-
 <script>
-let questions = [
-{q:"やまはどれ？ (mountain)", a:["川","山","田"], correct:1},
-{q:"みずはどれ？ (water)", a:["火","水","木"], correct:1},
-{q:"ひはどれ？ (sun)", a:["日","月","山"], correct:0},
-{q:"treeはどれ？", a:["金","木","土"], correct:1},
-{q:"かわはどれ？ (river)", a:["山","川","田"], correct:1}
-];
-
+let level = 1;
 let current = 0;
+let score = 0;
 
-function startGame(){
- current = 0;
- showQuestion();
+const data = {
+1: [
+{q:"やまはどれ？", a:["川","山","田"], c:1},
+{q:"みずはどれ？", a:["火","水","木"], c:1}
+],
+2: [
+{q:"ひはどれ？", a:["日","月","山"], c:0},
+{q:"かわはどれ？", a:["山","川","田"], c:1}
+],
+3: [
+{q:"treeはどれ？", a:["金","木","土"], c:1},
+{q:"そらはどれ？", a:["空","山","川"], c:0}
+],
+4: [
+{q:"学校はどれ？", a:["学校","山","水"], c:0},
+{q:"先生はどれ？", a:["川","先生","木"], c:1}
+]
+};
+
+function playSound(correct){
+let ctx = new (window.AudioContext || window.webkitAudioContext)();
+let osc = ctx.createOscillator();
+osc.type = "sine";
+osc.frequency.value = correct ? 600 : 200;
+osc.connect(ctx.destination);
+osc.start();
+setTimeout(()=>osc.stop(),200);
 }
 
-function showQuestion(){
- let q = questions[current];
- document.getElementById("question").innerText = q.q;
+function startLevel(l){
+level = l;
+current = 0;
+score = 0;
+updateScore();
+show();
+}
 
- let html = "";
- q.a.forEach((choice,i)=>{
-   html += `<button onclick="check(${i})">${choice}</button><br>`;
- });
- document.getElementById("choices").innerHTML = html;
+function show(){
+let q = data[level][current];
+document.getElementById("question").innerText = q.q;
+
+let html = "";
+q.a.forEach((choice,i)=>{
+html += `<button onclick="check(${i})">${choice}</button><br>`;
+});
+document.getElementById("choices").innerHTML = html;
 }
 
 function check(i){
- let q = questions[current];
- if(i === q.correct){
-   alert("せいかい！");
- } else {
-   alert("ちがうよ！");
- }
- current++;
- if(current < questions.length){
-   showQuestion();
- } else {
-   document.getElementById("question").innerText = "おわり！";
-   document.getElementById("choices").innerHTML = "";
- }
+let q = data[level][current];
+
+if(i === q.c){
+score++;
+playSound(true);
+alert("せいかい！");
+}else{
+playSound(false);
+alert("ちがうよ！");
+}
+
+updateScore();
+
+current++;
+if(current < data[level].length){
+show();
+}else{
+document.getElementById("question").innerText = "おわり！";
+document.getElementById("choices").innerHTML = "";
+}
+}
+
+function updateScore(){
+document.getElementById("score").innerText = "スコア: " + score;
 }
 </script>
 
