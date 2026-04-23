@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>かんじゲーム</title>
+<style>
+body { font-family: sans-serif; text-align:center; background:#f0f8ff; }
+button { font-size:20px; margin:10px; padding:15px; border-radius:10px; }
+</style>
+</head>
+<body>
+
+<h1>かんじゲーム</h1>
+<p id="question">スタートを押してね</p>
+
+<div id="choices"></div>
+
+<button onclick="startGame()">スタート</button>
+
+<script>
+let questions = [
+{q:"やまはどれ？ (mountain)", a:["川","山","田"], correct:1},
+{q:"みずはどれ？ (water)", a:["火","水","木"], correct:1},
+{q:"ひはどれ？ (sun)", a:["日","月","山"], correct:0},
+{q:"treeはどれ？", a:["金","木","土"], correct:1},
+{q:"かわはどれ？ (river)", a:["山","川","田"], correct:1}
+];
+
+let current = 0;
+
+function startGame(){
+ current = 0;
+ showQuestion();
+}
+
+function showQuestion(){
+ let q = questions[current];
+ document.getElementById("question").innerText = q.q;
+
+ let html = "";
+ q.a.forEach((choice,i)=>{
+   html += `<button onclick="check(${i})">${choice}</button><br>`;
+ });
+ document.getElementById("choices").innerHTML = html;
+}
+
+function check(i){
+ let q = questions[current];
+ if(i === q.correct){
+   alert("せいかい！");
+ } else {
+   alert("ちがうよ！");
+ }
+ current++;
+ if(current < questions.length){
+   showQuestion();
+ } else {
+   document.getElementById("question").innerText = "おわり！";
+   document.getElementById("choices").innerHTML = "";
+ }
+}
+</script>
+
+</body>
+</html>
